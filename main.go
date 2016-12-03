@@ -10,6 +10,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+var dbmap = initDb()
+
 type PostMessage struct {
 	Cust_id   int
 	Trans_id1 int
@@ -100,7 +102,8 @@ func main() {
 	app.Run(":8000")
 }
 
-func handleDataFromCart() {
+//receive json object.
+func handleDataFromCart(jsonData string) {
 	//Decoding the JSON, dummy data from cart team
 	// text := "[{\"Cust_id\":1,\"Items\":\"pen\",\"Total\":100.2}]"
 	// bytes := []byte(text)
@@ -109,23 +112,17 @@ func handleDataFromCart() {
 	//
 	// for l := range g {
 	// 	fmt.Printf("Cust_id = %v, Items = %v, Total = %v", g[l].Cust_id, g[l].Items, g[l].Total)
-	// 	fmt.Println()
+	// fmt.Println()
 	// }
+
+	fmt.Println(jsonData)
 }
 
 //https://github.com/go-sql-driver/mysql/wiki/Examples
 func getCustomerFromDb(customerId string) CustomerInfo {
 	info := CustomerInfo{}
-	db, err := sql.Open("mysql",
-		"inno:iLoveHotpot9000!@tcp(mysql-instance.cquhxxzy78fy.us-west-2.rds.amazonaws.com:3306)/uwt")
-	if err != nil {
-		panic(err.Error())
-		log.Fatal(err)
-	}
 
-	defer db.Close()
-
-	rows, err := db.Query("SELECT * FROM customer WHERE id=?", customerId)
+	rows, err := dbmap.Query("SELECT * FROM customer WHERE id=?", customerId)
 	if err != nil {
 		panic(err.Error())
 		log.Fatal(err)
@@ -170,7 +167,7 @@ func getCustomerFromDb(customerId string) CustomerInfo {
 		Phone:     phone_number,
 		Email:     email,
 	}
-
+	fmt.Println("CustomerInfo: ", info)
 	return info
 }
 
@@ -178,16 +175,7 @@ func getCustomerFromDb(customerId string) CustomerInfo {
 func getPaymentFromDb(customerId string) PaymentInfo {
 	info := PaymentInfo{}
 
-	db, err := sql.Open("mysql",
-		"inno:iLoveHotpot9000!@tcp(mysql-instance.cquhxxzy78fy.us-west-2.rds.amazonaws.com:3306)/uwt")
-	if err != nil {
-		panic(err.Error())
-		log.Fatal(err)
-	}
-
-	defer db.Close()
-
-	rows, err := db.Query("SELECT * FROM payment WHERE id=?", customerId)
+	rows, err := dbmap.Query("SELECT * FROM payment WHERE id=?", customerId)
 	if err != nil {
 		panic(err.Error())
 		log.Fatal(err)
@@ -220,11 +208,23 @@ func getPaymentFromDb(customerId string) PaymentInfo {
 		Exp:          expiration,
 		FullName:     full_name,
 	}
-
+	fmt.Println("paymentInfo: ", info)
 	return info
 }
 
-//connect to db 2 of the dbs, query data
-func initDb() {
+//creat db connection
+func initDb() *sql.DB {
+	db, err := sql.Open("mysql",
+		"inno:iLoveHotpot9000!@tcp(mysql-instance.cquhxxzy78fy.us-west-2.rds.amazonaws.com:3306)/uwt")
+	if err != nil {
+		checkErr(err, "Failed to open connection to mysql ")
+	}
+	return db
+}
 
+//Reference: http://phalt.co/a-simple-api-in-go/
+func checkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,16 +48,9 @@ func main() {
 
 	//start server at port 8000
 	app := gin.Default()
-	//test it by type in browser:
-	// http://localhost:8000/
-	app.GET("/", func(c *gin.Context) {
-		content := gin.H{"Hello": "World"}
-		c.JSON(200, content)
-	})
 
 	//get customer info, test on:
 	//http://localhost:8000/customer_info/1
-
 	app.GET("/customer_info/:id", func(ctx *gin.Context) {
 		//get the customer id from path :id
 		id := ctx.Param("id")
@@ -86,36 +80,39 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 
-	app.POST("/confirmation", func(c *gin.Context) {
+	app.POST("/checkout/order", func(ctx *gin.Context) {
 
+		var json GetMessage
+		ctx.Bind(&json)
+
+		//create response json:
+		response := gin.H{"status": "success"}
+
+		//if success, send response
+		ctx.JSON(http.StatusOK, response)
+	})
+
+	app.POST("/confirmation", func(ctx *gin.Context) {
+		var json PostMessage
+		ctx.Bind(&json)
 		//Generate Randon transaction number
-		// trans_id := rand.Intn(10000)
-		// postData := PostMessage{
-		// 	Cust_id:   cust_id,
-		// 	Trans_id1: trans_id,
-		// 	Items:     "pen", //this need to be array
-		// 	Total:     100.20,
-		// }
+		trans_id := rand.Intn(10000)
+		//just append transactionid
+		postData := PostMessage{
+			Cust_id:   1,
+			Trans_id1: trans_id,
+			Items:     "pen", //this need to be array
+			Total:     100.20,
+		}
+		//create response json:
+		response := gin.H{"status": "success", "order_info": postData}
+		fmt.Println(response)
+		ctx.JSON(http.StatusOK, response)
 
 	})
 
+	//after declare all api endpoints, start server:
 	app.Run(":8000")
-}
-
-//receive json object.
-func handleDataFromCart(jsonData string) {
-	//Decoding the JSON, dummy data from cart team
-	// text := "[{\"Cust_id\":1,\"Items\":\"pen\",\"Total\":100.2}]"
-	// bytes := []byte(text)
-	// var g []GetMessage
-	// json.Unmarshal(bytes, &g)
-	//
-	// for l := range g {
-	// 	fmt.Printf("Cust_id = %v, Items = %v, Total = %v", g[l].Cust_id, g[l].Items, g[l].Total)
-	// fmt.Println()
-	// }
-
-	fmt.Println(jsonData)
 }
 
 //https://github.com/go-sql-driver/mysql/wiki/Examples
@@ -181,7 +178,6 @@ func getPaymentFromDb(customerId string) PaymentInfo {
 		log.Fatal(err)
 		fmt.Println(err)
 	}
-
 	defer rows.Close()
 
 	var (

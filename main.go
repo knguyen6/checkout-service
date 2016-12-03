@@ -191,12 +191,12 @@ func getPaymentFromDb(customerId string) PaymentInfo {
 
 	for rows.Next() {
 		//var first_name,id string
-		if err := rows.Scan(&id, &card_number, &expiration, &security_code, &full_name, &phone_number); err != nil {
+		if err := rows.Scan(&id, &card_number, &expiration, &security_code, &phone_number, &full_name); err != nil {
 			log.Fatal(err)
 		}
 
 	}
-
+	// fmt.Println(full_name)
 	info = PaymentInfo{
 		ID:           id,
 		CardNumber:   card_number,
@@ -204,7 +204,7 @@ func getPaymentFromDb(customerId string) PaymentInfo {
 		Exp:          expiration,
 		FullName:     full_name,
 	}
-	fmt.Println("paymentInfo: ", info)
+	// fmt.Println("paymentInfo: ", info)
 	return info
 }
 
